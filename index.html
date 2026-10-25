@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taqssem Groups | اعرف جروبك</title>
+<style>
+
+  :root { color-scheme: light; --ink:#172b4d; --muted:#66758f; --line:#e4eaf3; --brand:#3157d5; --brand-dark:#2344b3; --mint:#12a878; --surface:#fff; }
+  * { box-sizing:border-box; margin:0; padding:0; font-family:'Segoe UI',Tahoma,Arial,sans-serif; }
+  body { min-height:100vh; display:grid; place-items:center; padding:28px 18px; color:var(--ink); background:radial-gradient(ellipse at 12% 8%,#d9e5ff 0,transparent 35%),radial-gradient(ellipse at 88% 90%,#d8f4e9 0,transparent 34%),#f4f7fc; }
+  .card { width:min(100%,480px); padding:clamp(24px,6vw,40px); background:var(--surface); border:1px solid rgba(225,232,243,.9); border-radius:24px; box-shadow:0 24px 70px rgba(28,49,90,.12); }
+  .brand { display:flex; justify-content:center; align-items:center; gap:12px; margin-bottom:24px; }
+  .brand-mark { display:grid; place-items:center; width:48px;height:48px;border-radius:16px;background:#edf2ff;font-size:24px; }
+  h1 { color:var(--ink);font-size:25px;letter-spacing:-.4px;text-align:center; }
+  .sub { margin-top:8px;text-align:center;color:var(--muted);font-size:15px;line-height:1.8; }
+  .form { margin-top:28px; }
+  label { display:block;margin:0 0 8px;color:#40516c;font-size:14px;font-weight:700; }
+  input { width:100%; min-height:52px; padding:13px 15px; border:1px solid #dce4f0; border-radius:12px; background:#fbfcff; font-size:16px; margin-bottom:17px; transition:border .2s,box-shadow .2s; direction:ltr;text-align:left; }
+  input#waName { direction:rtl;text-align:right; }
+  input:focus { border-color:var(--brand);outline:0;box-shadow:0 0 0 4px rgba(49,87,213,.12);background:#fff; }
+  button { width:100%; min-height:52px; padding:13px 18px; background:var(--brand);color:#fff;border:0;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;transition:transform .15s,background .15s,box-shadow .15s;box-shadow:0 8px 18px rgba(49,87,213,.2); }
+  button:hover { background:var(--brand-dark);transform:translateY(-1px); } button:disabled { opacity:.65;cursor:wait;transform:none; }
+  #result,#error { margin-top:20px; }
+  .student-box { overflow:hidden;background:#f8faff;border:1px solid #e4eaf6;border-radius:16px;padding:5px 16px; }
+  .row { display:flex;justify-content:space-between;gap:14px;padding:13px 2px;border-bottom:1px solid #e9eef6;font-size:14px; }
+  .row:last-child { border:0; }.label { color:var(--muted); }.value { color:var(--ink);font-weight:700;text-align:left;overflow-wrap:anywhere; }
+  .group-link { display:block;text-align:center;margin-top:14px;padding:15px;background:var(--mint);color:#fff;border-radius:12px;text-decoration:none;font-size:16px;font-weight:700;transition:background .15s; }
+  .group-link:hover { background:#0c9368; }
+  #error { padding:14px;background:#fff0ef;color:#ad332a;border:1px solid #f5d5d2;border-radius:12px;text-align:center;font-size:14px;line-height:1.7; }
+  .note { margin-top:18px;text-align:center;font-size:12px;color:#8591a5;line-height:1.7; }
+  .admin-link { display:inline-flex;align-items:center;justify-content:center;gap:7px;margin:18px auto 0;padding:9px 14px;border:1px solid #e4eaf3;border-radius:10px;color:#66758f;text-decoration:none;font-size:13px;transition:all .15s; }
+  .admin-link:hover { color:#3157d5;border-color:#cbd7f4;background:#f7f9ff; }
+  .footer-nav { text-align:center; }
+  @media(max-width:420px) { body { padding:14px; }.card { border-radius:20px; } h1 {font-size:22px;} }
+
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="brand"><div class="brand-mark" aria-hidden="true">👥</div><h1>Taqssem Groups</h1></div>
+  <p class="sub">اكتب رقم موبايلك واعرف مجموعتك الدراسية بسهولة</p>
+
+  <form id="lookupForm" class="form">
+    <label for="phone">رقم الموبايل المسجل في الدفعة</label>
+    <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="01xxxxxxxxx" required>
+    <label for="waName">اسمك على واتساب <span style="font-weight:400;color:#8591a5">(اختياري)</span></label>
+    <input id="waName" type="text" autocomplete="name" placeholder="اكتب الاسم هنا">
+    <button id="btn" type="submit">اعرف مجموعتي ←</button>
+  </form>
+
+  <div id="result" hidden></div>
+  <div id="error" hidden></div>
+  <p class="note">الرقم بيتحقق من كشوف الدفعة الرسمية بس</p>
+  <nav class="footer-nav" aria-label="روابط الموقع"><a class="admin-link" href="admin.html">🔐 دخول الإدارة</a></nav>
+</main>
+
+<script type="module">
+  // ⬇️⬇️ ضع إعدادات firebaseConfig بتاعتك هنا (من ملاحظاتك) ⬇️⬇️
+  const firebaseConfig = {
+    apiKey: "AIzaSyAky9Ig-e-DAZM0BNzJ9XEv1-gHfb-wjTU",
+    authDomain: "taqssem-groups.firebaseapp.com",
+    projectId: "taqssem-groups",
+    storageBucket: "taqssem-groups.firebasestorage.app",
+    messagingSenderId: "293858870250",
+    appId: "1:293858870250:web:77e76bbe133e020454e893"
+  };
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const form = document.getElementById('lookupForm');
+  const btn = document.getElementById('btn');
+  const resultBox = document.getElementById('result');
+  const errorBox = document.getElementById('error');
+
+  function normalizePhone(raw) {
+    let p = raw.replace(/[\s\-()]/g, '');
+    if (p.startsWith('+20')) p = '0' + p.slice(3);
+    else if (p.startsWith('0020')) p = '0' + p.slice(4);
+    return p;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    resultBox.hidden = true;
+    errorBox.hidden = true;
+    btn.disabled = true;
+    btn.textContent = 'بنبحث... ⏳';
+
+    const phone = normalizePhone(document.getElementById('phone').value);
+    const waName = document.getElementById('waName').value.trim();
+
+    try {
+      // 1) البحث عن الطالب (الرقم هو ID المستند)
+      const studentSnap = await getDoc(doc(db, 'students', phone));
+      if (!studentSnap.exists()) {
+        errorBox.textContent = '❌(BETZA: 01280757739 ) الرقم ده مش مسجل في الشيت. لو متأكد من رقمك تواصل مع الإدارة.';
+        errorBox.hidden = false;
+        return;
+      }
+      const st = studentSnap.data();
+
+      // 2) جلب اللينكات من الإعدادات
+      const settingsSnap = await getDoc(doc(db, 'settings', 'general'));
+      const settings = settingsSnap.exists() ? settingsSnap.data() : {};
+      const link = st.track === 'network' ? settings.networkGroupLink : settings.softwareGroupLink;
+      const trackName = st.track === 'network' ? 'Network 🌐' : 'Software 💻';
+
+      // 3) تسجيل الطلب للإدارة
+      try {
+        await addDoc(collection(db, 'requests'), {
+          phone: phone,
+          whatsappName: waName,
+          track: st.track,
+          status: 'pending',
+          createdAt: new Date()
+        });
+      } catch (err) { console.log('تعذر تسجيل الطلب:', err); }
+
+      // 4) عرض النتيجة
+      const details = document.createElement('div');
+      details.className = 'student-box';
+      const rows = [['الاسم', st.name || '-'], ['الرقم الأكاديمي', st.academicNumber || '-'], ['رقم الموبايل', phone], ['الشعبة', trackName]];
+      rows.forEach(([label, value]) => {
+        const row = document.createElement('div'); row.className = 'row';
+        const labelEl = document.createElement('span'); labelEl.className = 'label'; labelEl.textContent = label;
+        const valueEl = document.createElement('span'); valueEl.className = 'value'; valueEl.textContent = value;
+        if (label === 'رقم الموبايل') valueEl.dir = 'ltr';
+        row.append(labelEl, valueEl); details.appendChild(row);
+      });
+      resultBox.replaceChildren(details);
+      if (link && /^https:\/\//i.test(link)) {
+        const anchor = document.createElement('a'); anchor.className = 'group-link'; anchor.href = link; anchor.target = '_blank'; anchor.rel = 'noopener noreferrer';
+        anchor.textContent = `انضم لجروب ${trackName} ←`; resultBox.appendChild(anchor);
+      } else {
+        const note = document.createElement('p'); note.className = 'note'; note.textContent = 'لينك الجروب هيتضاف قريب'; resultBox.appendChild(note);
+      }
+      resultBox.hidden = false;
+    } catch (err) {
+      errorBox.textContent = '⚠️ حصل خطأ، جرب تاني بعد شوية.';
+      errorBox.hidden = false;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'اعرف جروبك 🚀';
+    }
+  });
+</script>
+</body>
+</html>
